@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>অ্যাডমিন প্যানেল</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; background: #f5f7fa; }
+  header { background: #2d3748; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+  header a { color: #fff; font-size: 14px; }
+  main { padding: 16px; }
+  #map { height: 340px; border-radius: 10px; margin-bottom: 16px; }
+  .wrap { overflow-x: auto; background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { padding: 9px 12px; border-bottom: 1px solid #eee; text-align: left; white-space: nowrap; }
+  th { background: #edf2f7; }
+  td.ua { max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+  button.del { background: #c53030; color: #fff; border: 0; border-radius: 5px; padding: 5px 9px; cursor: pointer; }
+</style>
+</head>
+<body>
+<header>
+  <strong>অ্যাডমিন প্যানেল (মোট: {{ rows|length }})</strong>
+  <a href="/admin/logout">লগআউট</a>
+</header>
+<main>
+  <div id="map"></div>
+  <div class="wrap">
+    <table>
+      <tr><th>#</th><th>Latitude</th><th>Longitude</th><th>Accuracy (m)</th><th>IP</th><th>সময় (UTC)</th><th>ম্যাপ</th><th>Device</th><th></th></tr>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.latitude }}</td>
+        <td>{{ r.longitude }}</td>
+        <td>{{ r.accuracy|round(0) if r.accuracy else '-' }}</td>
+        <td>{{ r.ip }}</td>
+        <td>{{ r.created_at }}</td>
+        <td><a target="_blank" href="https://www.openstreetmap.org/?mlat={{ r.latitude }}&mlon={{ r.longitude }}#map=16/{{ r.latitude }}/{{ r.longitude }}">দেখুন</a></td>
+        <td class="ua" title="{{ r.user_agent }}">{{ r.user_agent }}</td>
+        <td>
+          <form method="post" action="/admin/delete/{{ r.id }}" onsubmit="return confirm('মুছে ফেলবেন?')">
+            <button class="del">মুছুন</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="9">এখনো কোনো লোকেশন নেই।</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+  const points = {{ points|tojson }};
+  const map = L.map("map").setView(points.length ? points[0] : [23.8, 90.4], points.length ? 11 : 6);
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors", maxZoom: 19
+  }).addTo(map);
+  points.forEach(p => L.marker(p).addTo(map));
+  if (points.length > 1) map.fitBounds(points, { padding: [30, 30] });
+</script>
+</body>
+</html>

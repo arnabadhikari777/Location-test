@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>হোম পেজ</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; background: #f5f7fa; color: #222; }
+  header { background: #2b6cb0; color: #fff; padding: 20px; text-align: center; }
+  main { max-width: 640px; margin: 24px auto; padding: 0 16px; }
+  .card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+  #status { margin-top: 16px; padding: 12px; border-radius: 8px; font-size: 15px; display: none; }
+  .ok { background: #e6f6ea; color: #1d6b32; }
+  .warn { background: #fff4e0; color: #8a5a00; }
+  button { margin-top: 10px; padding: 8px 14px; border: 0; border-radius: 6px; background: #2b6cb0; color: #fff; cursor: pointer; }
+  a.admin { display: block; text-align: center; margin: 24px 0; font-size: 14px; color: #666; }
+</style>
+</head>
+<body>
+<header><h1>স্বাগতম!</h1></header>
+<main>
+  <div class="card">
+    <p>এটি আমাদের হোম পেজ। লোকেশনের অনুমতি দিন বা না দিন, আপনি পুরো সাইট দেখতে পারবেন।</p>
+    <p>আপনার লোকেশন শুধু টেস্টিংয়ের জন্য সংরক্ষণ করা হয়।</p>
+    <div id="status"></div>
+  </div>
+  <a class="admin" href="/admin">অ্যাডমিন প্যানেল</a>
+</main>
+
+<script>
+const statusBox = document.getElementById("status");
+
+function show(msg, cls, withRetry) {
+  statusBox.className = cls;
+  statusBox.style.display = "block";
+  statusBox.innerHTML = msg +
+    (withRetry ? '<br><button onclick="askLocation()">আবার চেষ্টা করুন</button>' : "");
+}
+
+function askLocation() {
+  if (!("geolocation" in navigator)) {
+    show("আপনার ব্রাউজার লোকেশন সাপোর্ট করে না।", "warn");
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const { latitude, longitude, accuracy } = pos.coords;
+      try {
+        const res = await fetch("/api/location", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ latitude, longitude, accuracy })
+        });
+        if (!res.ok) throw new Error();
+        show("ধন্যবাদ! আপনার লোকেশন সংরক্ষিত হয়েছে।", "ok");
+      } catch (e) {
+        show("লোকেশন সংরক্ষণ করা যায়নি।", "warn", true);
+      }
+    },
+    (err) => {
+      if (err.code === 1) {
+        show("লোকেশনের অনুমতি দেননি। ঠিক আছে, আপনি সাইট ব্যবহার করতে পারেন।", "warn", true);
+      } else {
+        show("লোকেশন পাওয়া যায়নি।", "warn", true);
+      }
+    },
+    { enableHighAccuracy: true, timeout: 15000 }
+  );
+}
+
+// পেজ আগে লোড হবে, তারপর অনুমতি চাওয়া হবে
+window.addEventListener("load", askLocation);
+</script>
+</body>
+</html>
