@@ -39,12 +39,12 @@
       res = await fetch(path, Object.assign({ credentials: "same-origin" }, options));
     } catch (err) {
       if (err && err.name === "AbortError") throw err;
-      throw new Error("ইন্টারনেট সংযোগ চেক করে আবার চেষ্টা করুন।");
+      throw new Error("Check your internet connection and try again.");
     }
     let body = null;
     try { body = await res.json(); } catch (_) { /* not JSON */ }
     if (!res.ok || !body || body.ok === false) {
-      throw new Error((body && body.error) || "কিছু একটা সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+      throw new Error((body && body.error) || "Something went wrong. Please try again.");
     }
     return body;
   }
@@ -55,15 +55,15 @@
     // The label sent to the admin panel must describe where the visitor IS,
     // not a city they merely searched for.
     if (target.type === "coords") lastPlace = place;
-    el.place.textContent = place || "আপনার এলাকা";
+    el.place.textContent = place || "Your area";
     el.desc.textContent = w.summary || w.description || "";
     el.desc.title = w.description || "";
     el.temp.textContent = String(w.temperature);
-    el.feels.textContent = w.feels_like != null ? "অনুভূত হচ্ছে " + w.feels_like + "°C" : "";
+    el.feels.textContent = w.feels_like != null ? "Feels like " + w.feels_like + "°C" : "";
     el.humidity.textContent = w.humidity != null ? w.humidity + "%" : "--";
     el.wind.textContent = w.wind_speed != null ? w.wind_speed + " m/s" : "--";
     el.label.textContent = target.type === "coords"
-      ? "📍 আপনার লোকেশনের আবহাওয়া" : "🔎 খোঁজা শহরের আবহাওয়া";
+      ? "📍 Weather for your location" : "🔎 Weather for the searched city";
     if (w.icon) {
       const img = document.createElement("img");
       img.src = "https://openweathermap.org/img/wn/" + w.icon + "@2x.png";
@@ -74,7 +74,7 @@
     }
     el.locate.hidden = target.type === "coords";
     const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    setStatus("সর্বশেষ আপডেট: " + time);
+    setStatus("Last updated: " + time);
   }
 
   async function loadWeather(target, opts) {
@@ -85,7 +85,7 @@
     if (!silent) {
       el.card.classList.add("is-loading");
       el.button.disabled = true;
-      setStatus("আবহাওয়ার তথ্য আনা হচ্ছে…");
+      setStatus("Loading weather information…");
     }
     const query = target.type === "coords"
       ? new URLSearchParams({ lat: target.lat.toFixed(3), lon: target.lon.toFixed(3) })
@@ -123,11 +123,11 @@
     el.locate.hidden = false;
     const code = err && err.code;
     if (code === 1) {
-      setStatus("লোকেশনের অনুমতি দেওয়া হয়নি। ব্রাউজারের সাইট সেটিংসে লোকেশন ‘Allow’ করুন, অথবা শহরের নাম লিখে খুঁজুন।", "error");
+      setStatus("Location permission was denied. Enable location in the browser site settings or search by city.", "error");
     } else if (code === 3) {
-      setStatus("লোকেশন পেতে বেশি সময় লাগছে। আবার চেষ্টা করুন বা শহরের নাম লিখে খুঁজুন।", "error");
+      setStatus("Location detection is taking too long. Please try again or search by city.", "error");
     } else {
-      setStatus("আপনার লোকেশন পাওয়া যায়নি। শহরের নাম লিখে খুঁজুন।", "error");
+      setStatus("Your location could not be determined. Please search by city instead.", "error");
     }
   }
 
@@ -174,11 +174,11 @@
 
   async function useMyLocation(force) {
     if (!("geolocation" in navigator)) {
-      setStatus("এই ব্রাউজারে লোকেশন সাপোর্ট নেই। শহরের নাম লিখে খুঁজুন।", "error");
+      setStatus("Geolocation is not supported in this browser. Please search by city instead.", "error");
       return;
     }
     el.locate.disabled = true;
-    setStatus("লোকেশন নেওয়া হচ্ছে… ব্রাউজার অনুমতি চাইলে ‘Allow’ চাপুন।");
+    setStatus("Getting location… if the browser asks for permission, click ‘Allow’.");
     let pos;
     try {
       pos = await getPosition();
@@ -216,7 +216,7 @@
     event.preventDefault();
     const city = el.input.value.trim().replace(/\s+/g, " ");
     if (!city) {
-      setStatus("শহরের নাম লিখুন।", "error");
+      setStatus("Please enter a city name.", "error");
       el.input.focus();
       return;
     }

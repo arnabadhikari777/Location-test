@@ -4,3 +4,4 @@ __pycache__/
 *.pyc
 weather.db
 weather.db-journal
+PYTHONANYWHERE_SETUP.md

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>আজকের আবহাওয়া</title>
+    <title>Today's Weather</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%98%80%EF%B8%8F%3C/text%3E%3C/svg%3E">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
@@ -14,31 +14,31 @@
         <header class="app-header">
             <div class="logo">☀️</div>
             <div>
-                <h1>আবহাওয়া দেখতে চান?</h1>
-                <p>লোকেশনের অনুমতি দিলে আপনার এলাকার আবহাওয়া নিজে থেকেই দেখাবে।</p>
+                <h1>Want to check the weather?</h1>
+                <p>Allow location access and your local weather will appear automatically.</p>
             </div>
         </header>
 
         <section class="search-section">
-            <label for="city-input">অথবা শহরের নাম লিখে খুঁজুন</label>
+            <label for="city-input">Or search by city name</label>
 
             <form class="search-box" id="search-form" autocomplete="off">
                 <input type="text" id="city-input" name="city" maxlength="80" required
-                       placeholder="যেমন: Kolkata, Dhaka">
-                <button type="submit" id="search-button">খুঁজুন</button>
+                       placeholder="Example: Kolkata, Dhaka">
+                <button type="submit" id="search-button">Search</button>
             </form>
 
             <button type="button" class="btn-link" id="locate-button" hidden>
-                📍 আমার লোকেশনের আবহাওয়া দেখুন
+                📍 Show my local weather
             </button>
         </section>
 
         <section class="weather-card" id="weather-card" aria-live="polite">
             <div class="weather-top">
                 <div>
-                    <p class="location-label" id="source-label">বর্তমান আবহাওয়া</p>
-                    <h2 id="place">আপনার এলাকা</h2>
-                    <p id="weather-description">লোকেশনের অপেক্ষায়…</p>
+                    <p class="location-label" id="source-label">Current weather</p>
+                    <h2 id="place">Your area</h2>
+                    <p id="weather-description">Waiting for location…</p>
                 </div>
                 <div class="weather-icon" id="weather-icon">🌤️</div>
             </div>
@@ -52,29 +52,29 @@
             <div class="weather-details">
                 <div class="detail-box">
                     <span class="detail-icon">💧</span>
-                    <p>আর্দ্রতা</p>
+                    <p>Humidity</p>
                     <h3 id="humidity">--%</h3>
                 </div>
                 <div class="detail-box">
                     <span class="detail-icon">💨</span>
-                    <p>বাতাসের গতি</p>
+                    <p>Wind speed</p>
                     <h3 id="wind">-- m/s</h3>
                 </div>
             </div>
 
-            <p class="status-message" id="status" role="status">লোকেশন নেওয়া হচ্ছে…</p>
-            <noscript><p class="status-message error">এই সাইট চালাতে JavaScript চালু থাকতে হবে।</p></noscript>
+            <p class="status-message" id="status" role="status">Getting location…</p>
+            <noscript><p class="status-message error">JavaScript must be enabled to use this site.</p></noscript>
         </section>
 
         <div class="notice">
-            <p><strong>লোকেশন সম্পর্কে:</strong> আপনি অনুমতি দিলে আপনার লোকেশন আবহাওয়া দেখাতে ব্যবহার হয়, এবং সাইটের অ্যাডমিন আপনার লোকেশন ও সাইটে থাকার সময় দেখতে পান।</p>
+            <p><strong>About location:</strong> If you allow it, your location is used to display the weather, and the site admin can see your location and time spent on the site.</p>
             {% if retention_days > 0 %}
-            <p>{{ retention_days }} দিন নিষ্ক্রিয় থাকলে এই তথ্য নিজে থেকেই মুছে যায়।</p>
+            <p>These records are automatically deleted after {{ retention_days }} days of inactivity.</p>
             {% endif %}
         </div>
 
         <footer>
-            <p>আবহাওয়ার তথ্য: OpenWeatherMap</p>
+            <p>Weather data: OpenWeatherMap</p>
         </footer>
 
     </main>

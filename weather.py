@@ -132,14 +132,14 @@ def fmt_ago(seconds):
         return "—"
     seconds = max(0, int(seconds))
     if seconds < 5:
-        return "এইমাত্র"
+        return "just now"
     if seconds < 60:
-        return f"{seconds} সেকেন্ড আগে"
+        return f"{seconds} seconds ago"
     if seconds < 3600:
-        return f"{seconds // 60} মিনিট আগে"
+        return f"{seconds // 60} minutes ago"
     if seconds < 86400:
-        return f"{seconds // 3600} ঘণ্টা আগে"
-    return f"{seconds // 86400} দিন আগে"
+        return f"{seconds // 3600} hours ago"
+    return f"{seconds // 86400} days ago"
 
 
 def fmt_duration(seconds):
@@ -378,12 +378,12 @@ class WeatherError(Exception):
 def condition_bn(code):
     if not isinstance(code, int):
         return ""
-    names = {800: "পরিষ্কার আকাশ", 801: "হালকা মেঘ", 802: "আংশিক মেঘলা",
-             803: "মেঘলা আকাশ", 804: "মেঘলা আকাশ"}
+    names = {800: "Clear sky", 801: "Light clouds", 802: "Partly cloudy",
+             803: "Cloudy", 804: "Overcast"}
     if code in names:
         return names[code]
-    groups = {2: "বজ্রসহ বৃষ্টি", 3: "গুঁড়ি গুঁড়ি বৃষ্টি", 5: "বৃষ্টি",
-              6: "তুষারপাত", 7: "কুয়াশা / ধোঁয়াশা"}
+    groups = {2: "Thunderstorm", 3: "Drizzle", 5: "Rain",
+              6: "Snow", 7: "Mist / haze"}
     return groups.get(code // 100, "")
 
 
@@ -416,28 +416,28 @@ def fetch_weather(params, cache_key):
             return cached[1]
 
     if rate_limited("upstream", "all", UPSTREAM_PER_MINUTE, 60):
-        raise WeatherError("সার্ভার এখন ব্যস্ত, এক মিনিট পরে আবার চেষ্টা করুন।", 429)
+        raise WeatherError("The server is busy. Please try again in 1 minute.", 429)
     try:
         reply = requests.get(
             OWM_URL, params={**params, "appid": API_KEY, "units": "metric"}, timeout=8
         )
     except requests.RequestException:
-        raise WeatherError("আবহাওয়ার সার্ভারে পৌঁছানো যাচ্ছে না। একটু পরে আবার চেষ্টা করুন।", 502)
+        raise WeatherError("The weather service is unavailable. Please try again in a moment.", 502)
 
     if reply.status_code == 404:
-        raise WeatherError("শহরটি খুঁজে পাওয়া যায়নি। নামের বানান ঠিক আছে কিনা দেখুন।", 404)
+        raise WeatherError("City not found. Please check the spelling.", 404)
     if reply.status_code in (401, 403):
         app.logger.error("OpenWeatherMap rejected the API key (HTTP %s).", reply.status_code)
-        raise WeatherError("আবহাওয়া সেবায় সাময়িক সমস্যা চলছে। পরে আবার চেষ্টা করুন।", 503)
+        raise WeatherError("The weather service is temporarily unavailable. Please try again later.", 503)
     if reply.status_code == 429:
-        raise WeatherError("সার্ভার এখন ব্যস্ত, এক মিনিট পরে আবার চেষ্টা করুন।", 429)
+        raise WeatherError("The server is busy. Please try again in 1 minute.", 429)
     if reply.status_code != 200:
         app.logger.error("OpenWeatherMap returned HTTP %s.", reply.status_code)
-        raise WeatherError("আবহাওয়ার তথ্য আনা যায়নি। আবার চেষ্টা করুন।", 502)
+        raise WeatherError("Weather data could not be loaded. Please try again.", 502)
     try:
         payload = shape_weather(reply.json())
     except (ValueError, KeyError, IndexError, TypeError, AttributeError):
-        raise WeatherError("আবহাওয়ার সার্ভার থেকে অপ্রত্যাশিত উত্তর এসেছে।", 502)
+        raise WeatherError("The weather service returned an unexpected response.", 502)
 
     with _cache_lock:
         if len(_cache) > 500:
@@ -463,9 +463,9 @@ def api_weather():
     """GET /api/weather?lat=..&lon=..   (visitor's location)
        GET /api/weather?city=..         (manual search)"""
     if not API_KEY_OK:
-        return jsonify(ok=False, error="আবহাওয়া সেবা এখনো চালু করা হয়নি।"), 503
+        return jsonify(ok=False, error="Weather service is not available yet."), 503
     if rate_limited("weather", client_ip(), 60, 60):
-        return jsonify(ok=False, error="অনেক বেশি অনুরোধ হয়েছে। এক মিনিট পরে আবার চেষ্টা করুন।"), 429
+        return jsonify(ok=False, error="Too many requests. Please try again in 1 minute."), 429
 
     lat = parse_float(request.args.get("lat"), -90, 90)
     lon = parse_float(request.args.get("lon"), -180, 180)
@@ -477,11 +477,11 @@ def api_weather():
         key = ("geo", params["lat"], params["lon"])
     elif city:
         if len(city) > 80 or not city.isprintable():
-            return jsonify(ok=False, error="শহরের নাম সঠিক নয়।"), 400
+            return jsonify(ok=False, error="City name is invalid."), 400
         params = {"q": city}
         key = ("city", city.casefold())
     else:
-        return jsonify(ok=False, error="শহরের নাম লিখুন অথবা লোকেশন দিন।"), 400
+        return jsonify(ok=False, error="Enter a city name or share your location."), 400
 
     try:
         weather = fetch_weather(params, key)
@@ -557,7 +557,7 @@ def admin_login():
     if request.method == "POST":
         ip = client_ip()
         if count_hits("login-ip", ip, 900) >= 5 or count_hits("login-all", "all", 900) >= 30:
-            flash("অনেকবার ভুল চেষ্টা হয়েছে। ১৫ মিনিট পরে আবার চেষ্টা করুন।")
+            flash("Too many failed attempts. Please try again in 15 minutes.")
             return render_template("admin_login.html"), 429
         username = request.form.get("username", "")
         password = request.form.get("password", "")
@@ -570,8 +570,8 @@ def admin_login():
             return redirect(url_for("admin_dashboard"))
         add_hit("login-ip", ip)
         add_hit("login-all", "all")
-        flash("ইউজারনেম বা পাসওয়ার্ড ভুল।" if ADMIN_ENABLED
-              else "অ্যাডমিন লগইন বন্ধ আছে — .env ফাইলে ADMIN_PASSWORD দিন।")
+        flash("Incorrect username or password." if ADMIN_ENABLED
+              else "Admin login is disabled — add ADMIN_PASSWORD in the .env file.")
     return render_template("admin_login.html")
 
 
@@ -651,7 +651,7 @@ def delete_visitor(visitor_db_id):
     db = get_db()
     db.execute("DELETE FROM visitors WHERE id = ?", (visitor_db_id,))
     db.commit()
-    flash("ভিজিটরের রেকর্ড মুছে ফেলা হয়েছে।")
+    flash("Visitor record deleted.")
     return redirect(url_for("admin_dashboard"))
 
 
@@ -661,7 +661,7 @@ def delete_all_visitors():
     db = get_db()
     db.execute("DELETE FROM visitors")
     db.commit()
-    flash("সব ভিজিটর রেকর্ড মুছে ফেলা হয়েছে।")
+    flash("All visitor records deleted.")
     return redirect(url_for("admin_dashboard"))
 
 
@@ -692,7 +692,7 @@ def http_error(error):
 def database_error(error):
     app.logger.exception("Database error: %s", error)
     if request.path.startswith("/api/"):
-        return jsonify(ok=False, error="সার্ভার এখন ব্যস্ত, একটু পরে আবার চেষ্টা করুন।"), 503
+        return jsonify(ok=False, error="The server is busy. Please try again in a moment."), 503
     return InternalServerError()
 
 

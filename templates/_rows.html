@@ -1,7 +1,7 @@
 {% for v in visitors %}
 <tr>
-    <td><span class="dot{{ ' on' if v.online else '' }}"></span>{{ 'অনলাইন' if v.online else 'অফলাইন' }}</td>
-    <td><code>{{ v.short_id }}</code><small>প্রথম ভিজিট: {{ v.first_seen }}</small></td>
+    <td><span class="dot{{ ' on' if v.online else '' }}"></span>{{ 'Online' if v.online else 'Offline' }}</td>
+    <td><code>{{ v.short_id }}</code><small>First visit: {{ v.first_seen }}</small></td>
     <td>{{ v.place or '—' }}</td>
     <td>
         {% if v.has_location %}
@@ -13,12 +13,12 @@
     <td>{{ v.active }}</td>
     <td>{{ v.updates }}</td>
     <td>
-        <form method="post" action="{{ url_for('delete_visitor', visitor_db_id=v.id) }}" data-confirm="এই ভিজিটরের রেকর্ড মুছে ফেলবেন?">
+        <form method="post" action="{{ url_for('delete_visitor', visitor_db_id=v.id) }}" data-confirm="Delete this visitor's record?">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button class="danger">মুছুন</button>
+            <button class="danger">Delete</button>
         </form>
     </td>
 </tr>
 {% else %}
-<tr><td colspan="8" class="empty">এখনো কোনো ভিজিটর নেই।</td></tr>
+<tr><td colspan="8" class="empty">No visitors yet.</td></tr>
 {% endfor %}
