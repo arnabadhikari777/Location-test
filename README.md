@@ -25,38 +25,20 @@
 
 ## 📖 Overview
 
-**My Weather App** is a simple, clean Flask web app that shows the **current weather** for any city you search.
+**My Weather App** shows the **current weather for your own location** the moment you open it: the browser asks for location permission and the weather appears automatically. Prefer another place? Type a city name and search — no reload needed.
 
-Type a city name → hit Search → get temperature (°C), weather description, humidity, wind speed, and the official OpenWeatherMap icon — all in a modern glass-style card with a gradient background.
-
-> Built for learning: Flask routing, form handling, environment variables, external API calls, and a responsive frontend.
-
-**Live demo:** [my-weather-app-ikey.onrender.com](https://my-weather-app-ikey.onrender.com)
+The site owner also gets a password-protected **admin panel** (`/admin`) listing every visitor with their live location, online status and time spent on the site.
 
 ---
 
 ## ✨ Features
 
-- 🔍 **City search** — enter any city name and get live weather
-- 🌡️ **Temperature** in Celsius (rounded)
-- 📝 **Weather description** + official OpenWeatherMap icon
-- 💧 **Humidity** percentage
-- 💨 **Wind speed** in m/s
-- ⚠️ Clear error messages (empty input, city not found, invalid API key, network issues)
-- 📱 **Mobile-first** responsive UI
-- 🔐 API key kept in `.env` (never committed)
-
----
-
-## 🛠️ Tech Stack
-
-| Layer        | Technology                          |
-|--------------|-------------------------------------|
-| Backend      | Python, Flask 3.1                   |
-| API          | OpenWeatherMap Current Weather API  |
-| Config       | python-dotenv                       |
-| Frontend     | HTML5, CSS3, Vanilla JS             |
-| Deployment   | Render (gunicorn)                   |
+- 📍 **Automatic weather** from the browser location (coordinates go to OpenWeatherMap, which returns the area name)
+- 🔍 **City search** without a page reload
+- 🌡️ Temperature, feels-like, humidity, wind speed and the official icon
+- 🛡️ **Admin panel** — online status, map link per visitor, auto-refresh every 10 s, delete records
+- 🔐 Secrets only in `.env`; CSRF protection, login rate-limit, strict security headers
+- 🧹 Visitor data is deleted automatically after 30 days of inactivity (configurable)
 
 ---
 
@@ -64,97 +46,50 @@ Type a city name → hit Search → get temperature (°C), weather description, 
 
 ```
 My-weather-app/
-├── weather.py          # Flask app + OpenWeatherMap logic
-├── requirements.txt    # Python dependencies
-├── .gitignore          # Ignores .venv and .env
+├── weather.py              # Flask app, weather API, tracking API, admin
+├── requirements.txt
+├── .env.example            # copy to .env and fill in
 ├── templates/
-│   └── home.html       # Main page template
+│   ├── home.html           # public page
+│   ├── admin.html / _rows.html / admin_login.html
 └── static/
-    ├── style.css       # Gradient + glass card UI
-    └── script.js       # Enter-key form submit helper
+    ├── style.css, script.js          # public page
+    └── admin.css, admin.js           # admin panel
 ```
 
 ---
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Python **3.10+**
-- A free [OpenWeatherMap](https://openweathermap.org/api) API key
-
-### 1 · Clone the repository
-
-```bash
-git clone https://github.com/arnabadhikari777/My-weather-app.git
-cd My-weather-app
-```
-
-### 2 · Create virtual environment & install dependencies
+## 🚀 Run locally
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-```
-
-### 3 · Set your API key
-
-Create a `.env` file in the project root:
-
-```env
-OPENWEATHER_API_KEY=your_api_key_here
-```
-
-> Get a free key from [OpenWeatherMap](https://home.openweathermap.org/api_keys).  
-> The file is already listed in `.gitignore` so it will not be pushed.
-
-### 4 · Run the app
-
-```bash
+cp .env.example .env               # fill in the values; add FLASK_DEBUG=1 for local use
 python weather.py
 ```
 
-Open **http://127.0.0.1:5000** in your browser.
+Open **http://127.0.0.1:5000**. Location needs HTTPS or `localhost`.
 
 ---
 
 ## 🌐 How it works
 
-1. User submits a city name via the form (POST).
-2. Flask reads `OPENWEATHER_API_KEY` from the environment.
-3. A request is sent to:
-   ```
-   https://api.openweathermap.org/data/2.5/weather?q={city}&appid={key}&units=metric
-   ```
-4. On success, temperature, description, humidity, wind speed and icon are extracted and passed to the template.
-5. On failure, a friendly error message is shown (404 city, 401 key, network, etc.).
+1. On load the page asks the browser for the location.
+2. Allowed → `GET /api/weather?lat=..&lon=..` → OpenWeatherMap → the card fills in automatically.
+3. Denied or unavailable → a message explains why, and the city search still works (`GET /api/weather?city=..`).
+4. With permission, the location is reported to `/api/location` (throttled: only after real movement) and visible time is counted via `/api/heartbeat`.
+5. Weather answers are cached for 10 minutes and OpenWeatherMap calls are capped, so nobody can burn the API quota.
 
 ---
 
-## 📦 Deployment (Render)
+## 📦 Deployment
 
-The project is already configured for Render:
-
-- `requirements.txt` includes `gunicorn`
-- Set environment variable `OPENWEATHER_API_KEY` in the Render dashboard
-- Start command example:
-  ```bash
-  gunicorn weather:app
-  ```
-
-Live instance: [https://my-weather-app-ikey.onrender.com](https://my-weather-app-ikey.onrender.com)
+PythonAnywhere: see [PYTHONANYWHERE_SETUP.md](PYTHONANYWHERE_SETUP.md).
+Any other host: `gunicorn weather:app` with the same environment variables.
 
 ---
 
-## 🗺️ Roadmap
-
-- [ ] 5-day forecast
-- [ ] Geolocation (auto-detect city)
-- [ ] Dark / light theme toggle
-- [ ] Search history (localStorage)
-
----
 
 ## 📄 License
 

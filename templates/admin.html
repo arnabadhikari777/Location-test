@@ -1,52 +1,57 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather Admin Dashboard</title>
-    <style>
-        body{font-family:Arial,sans-serif;background:#f4f7fb;margin:0;color:#172033}.wrap{max-width:1200px;margin:auto;padding:24px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:20px 0}.stat,.table-wrap{background:#fff;border-radius:14px;padding:18px;box-shadow:0 5px 20px #0000000d}.stat strong{font-size:28px;display:block;margin-top:7px}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:900px}th,td{text-align:left;padding:11px;border-bottom:1px solid #eee}th{background:#fafafa}.danger{background:#b42318;color:#fff;border:0;border-radius:7px;padding:7px 10px;cursor:pointer}.logout{background:#111;color:#fff;border:0;border-radius:8px;padding:9px 12px;cursor:pointer}.muted{color:#667085;font-size:13px}.map-link{white-space:nowrap}
-    </style>
+    <meta name="robots" content="noindex, nofollow">
+    <title>অ্যাডমিন ড্যাশবোর্ড</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
 </head>
 <body>
 <div class="wrap">
     <div class="top">
-        <div><h1>Weather Admin Dashboard</h1><p class="muted">Visitor and live-location records</p></div>
-        <form method="POST" action="{{ url_for('admin_logout') }}"><button class="logout">Logout</button></form>
+        <div>
+            <h1>অ্যাডমিন ড্যাশবোর্ড</h1>
+            <p class="muted">ভিজিটরদের লাইভ লোকেশন · প্রতি ১০ সেকেন্ডে নিজে থেকে আপডেট হয় · সর্বশেষ আপডেট: <span id="updated-at">এইমাত্র</span></p>
+        </div>
+        <form method="post" action="{{ url_for('admin_logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="logout">লগআউট</button>
+        </form>
     </div>
 
+    {% for message in get_flashed_messages() %}<p class="flash">{{ message }}</p>{% endfor %}
+
     <div class="stats">
-        <div class="stat">Visitors<strong>{{ total_visitors }}</strong></div>
-        <div class="stat">With location<strong>{{ located_visitors }}</strong></div>
-        <div class="stat">Location updates<strong>{{ total_updates }}</strong></div>
-        <div class="stat">Active time<strong>{{ '%.0f'|format(total_active) }} sec</strong></div>
+        <div class="stat">অনলাইন এখন<strong data-stat="online">{{ stats.online }}</strong></div>
+        <div class="stat">মোট ভিজিটর<strong data-stat="total">{{ stats.total }}</strong></div>
+        <div class="stat">লোকেশন দিয়েছে<strong data-stat="located">{{ stats.located }}</strong></div>
+        <div class="stat">লোকেশন আপডেট<strong data-stat="updates">{{ stats.updates }}</strong></div>
+        <div class="stat">মোট সক্রিয় সময়<strong data-stat="active">{{ stats.active }}</strong></div>
     </div>
 
     <div class="table-wrap">
-        <div class="top"><h2>Visitor records</h2><form method="POST" action="{{ url_for('delete_all_visitors') }}" onsubmit="return confirm('Delete ALL visitor and location records?')"><button class="danger">Delete All</button></form></div>
+        <div class="top">
+            <div>
+                <h2>ভিজিটর রেকর্ড</h2>
+                <p class="muted">৪৫ সেকেন্ডের মধ্যে সক্রিয় থাকলে ‘অনলাইন’ · সর্বশেষ ৫০০ জন দেখানো হচ্ছে · লোকেশনে ট্যাপ করলে ম্যাপ খুলবে</p>
+            </div>
+            <form method="post" action="{{ url_for('delete_all_visitors') }}" data-confirm="সব ভিজিটর ও লোকেশন রেকর্ড মুছে ফেলবেন?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="danger">সব মুছুন</button>
+            </form>
+        </div>
         <table>
-            <thead><tr><th>ID</th><th>Visitor</th><th>First Seen</th><th>Last Seen</th><th>Latitude</th><th>Longitude</th><th>Accuracy</th><th>Location Updated</th><th>Active Seconds</th><th>Updates</th><th>Action</th></tr></thead>
-            <tbody>
-            {% for visitor in visitors %}
-            <tr>
-                <td>{{ visitor.id }}</td>
-                <td>{{ visitor.visitor_id[:12] }}…</td>
-                <td>{{ visitor.first_seen }}</td>
-                <td>{{ visitor.last_seen }}</td>
-                <td>{{ visitor.last_latitude if visitor.last_latitude is not none else '—' }}</td>
-                <td>{{ visitor.last_longitude if visitor.last_longitude is not none else '—' }}</td>
-                <td>{{ visitor.last_accuracy if visitor.last_accuracy is not none else '—' }} m</td>
-                <td>{{ visitor.location_updated_at or '—' }}</td>
-                <td>{{ '%.0f'|format(visitor.total_active_seconds) }}</td>
-                <td>{{ visitor.location_updates }}</td>
-                <td>
-                    <form method="POST" action="{{ url_for('delete_visitor', visitor_db_id=visitor.id) }}" onsubmit="return confirm('Delete this visitor record?')"><button class="danger">Delete</button></form>
-                </td>
-            </tr>
-            {% else %}<tr><td colspan="11">No visitor records yet.</td></tr>{% endfor %}
-            </tbody>
+            <thead>
+                <tr>
+                    <th>অবস্থা</th><th>ভিজিটর</th><th>এলাকা</th><th>লোকেশন</th>
+                    <th>সর্বশেষ দেখা</th><th>সক্রিয় সময়</th><th>আপডেট</th><th></th>
+                </tr>
+            </thead>
+            <tbody id="rows">{% include "_rows.html" %}</tbody>
         </table>
     </div>
 </div>
+<script src="{{ url_for('static', filename='admin.js') }}"></script>
 </body>
 </html>

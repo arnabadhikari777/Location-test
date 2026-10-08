@@ -1,0 +1,24 @@
+{% for v in visitors %}
+<tr>
+    <td><span class="dot{{ ' on' if v.online else '' }}"></span>{{ 'অনলাইন' if v.online else 'অফলাইন' }}</td>
+    <td><code>{{ v.short_id }}</code><small>প্রথম ভিজিট: {{ v.first_seen }}</small></td>
+    <td>{{ v.place or '—' }}</td>
+    <td>
+        {% if v.has_location %}
+        <a class="map-link" href="{{ v.map_url }}" target="_blank" rel="noopener noreferrer">{{ v.coords }}</a>
+        <small>{{ v.accuracy }}{% if v.accuracy and v.location_ago %} · {% endif %}{{ v.location_ago }}</small>
+        {% else %}—{% endif %}
+    </td>
+    <td>{{ v.last_seen }}<small>{{ v.ago }}</small></td>
+    <td>{{ v.active }}</td>
+    <td>{{ v.updates }}</td>
+    <td>
+        <form method="post" action="{{ url_for('delete_visitor', visitor_db_id=v.id) }}" data-confirm="এই ভিজিটরের রেকর্ড মুছে ফেলবেন?">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="danger">মুছুন</button>
+        </form>
+    </td>
+</tr>
+{% else %}
+<tr><td colspan="8" class="empty">এখনো কোনো ভিজিটর নেই।</td></tr>
+{% endfor %}

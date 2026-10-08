@@ -1,150 +1,84 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>My Weather App</title>
-
+    <title>আজকের আবহাওয়া</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%98%80%EF%B8%8F%3C/text%3E%3C/svg%3E">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
-
     <main class="weather-app">
 
         <header class="app-header">
             <div class="logo">☀️</div>
-
             <div>
-                <h1>Weather dhakte chao ?</h1>
-                <p>Tomar city te current weather: </p>
+                <h1>আবহাওয়া দেখতে চান?</h1>
+                <p>লোকেশনের অনুমতি দিলে আপনার এলাকার আবহাওয়া নিজে থেকেই দেখাবে।</p>
             </div>
         </header>
 
         <section class="search-section">
-            <label for="city-input">Tomar city</label>
+            <label for="city-input">অথবা শহরের নাম লিখে খুঁজুন</label>
 
-            <form class="search-box" method="POST" action="{{ url_for('home') }}">
-    <input
-        type="text"
-        id="city-input"
-        name="city"
-        placeholder="Enter city name..."
-        autocomplete="off"
-        required
-    >
+            <form class="search-box" id="search-form" autocomplete="off">
+                <input type="text" id="city-input" name="city" maxlength="80" required
+                       placeholder="যেমন: Kolkata, Dhaka">
+                <button type="submit" id="search-button">খুঁজুন</button>
+            </form>
 
-    <button type="submit" id="search-button">
-        Search
-    </button>
-</form>
+            <button type="button" class="btn-link" id="locate-button" hidden>
+                📍 আমার লোকেশনের আবহাওয়া দেখুন
+            </button>
         </section>
 
-        <section class="weather-card">
+        <section class="weather-card" id="weather-card" aria-live="polite">
+            <div class="weather-top">
+                <div>
+                    <p class="location-label" id="source-label">বর্তমান আবহাওয়া</p>
+                    <h2 id="place">আপনার এলাকা</h2>
+                    <p id="weather-description">লোকেশনের অপেক্ষায়…</p>
+                </div>
+                <div class="weather-icon" id="weather-icon">🌤️</div>
+            </div>
 
-    {% if weather %}
+            <div class="temperature">
+                <span id="temperature">--</span>
+                <span class="degree">°C</span>
+            </div>
+            <p class="feels" id="feels-like"></p>
 
-    <div class="weather-top">
-        <div>
-            <p class="location-label">CURRENT WEATHER</p>
+            <div class="weather-details">
+                <div class="detail-box">
+                    <span class="detail-icon">💧</span>
+                    <p>আর্দ্রতা</p>
+                    <h3 id="humidity">--%</h3>
+                </div>
+                <div class="detail-box">
+                    <span class="detail-icon">💨</span>
+                    <p>বাতাসের গতি</p>
+                    <h3 id="wind">-- m/s</h3>
+                </div>
+            </div>
 
-            <h2>{{ weather.city }}, {{ weather.country }}</h2>
+            <p class="status-message" id="status" role="status">লোকেশন নেওয়া হচ্ছে…</p>
+            <noscript><p class="status-message error">এই সাইট চালাতে JavaScript চালু থাকতে হবে।</p></noscript>
+        </section>
 
-            <p id="weather-description">
-                {{ weather.description }}
-            </p>
-        </div>
-
-        <div class="weather-icon">
-            <img
-                src="https://openweathermap.org/img/wn/{{ weather.icon }}@2x.png"
-                alt="{{ weather.description }}"
-            >
-        </div>
-    </div>
-
-    <div class="temperature">
-        <span id="temperature">{{ weather.temperature }}</span>
-        <span class="degree">°C</span>
-    </div>
-
-    <div class="weather-details">
-
-        <div class="detail-box">
-            <span class="detail-icon">💧</span>
-            <p>Humidity</p>
-            <h3>{{ weather.humidity }}%</h3>
-        </div>
-
-        <div class="detail-box">
-            <span class="detail-icon">💨</span>
-            <p>Wind Speed</p>
-            <h3>{{ weather.wind_speed }} m/s</h3>
-        </div>
-
-    </div>
-
-    {% else %}
-
-    <div class="weather-top">
-        <div>
-            <p class="location-label">CURRENT WEATHER</p>
-            <h2>Your City</h2>
-            <p id="weather-description">
-                Search for a city to see its weather
-            </p>
-        </div>
-
-        <div class="weather-icon">🌤️</div>
-    </div>
-
-    <div class="temperature">
-        <span id="temperature">--</span>
-        <span class="degree">°C</span>
-    </div>
-
-    <div class="weather-details">
-        <div class="detail-box">
-            <span class="detail-icon">💧</span>
-            <p>Humidity</p>
-            <h3>--%</h3>
-        </div>
-
-        <div class="detail-box">
-            <span class="detail-icon">💨</span>
-            <p>Wind Speed</p>
-            <h3>-- m/s</h3>
-        </div>
-    </div>
-
-    {% endif %}
-
-    {% if error %}
-        <p class="status-message">{{ error }}</p>
-    {% else %}
-        <p class="status-message">
-            {% if weather %}
-                Weather information updated successfully.
-            {% else %}
-                Enter a city name to get started.
+        <div class="notice">
+            <p><strong>লোকেশন সম্পর্কে:</strong> আপনি অনুমতি দিলে আপনার লোকেশন আবহাওয়া দেখাতে ব্যবহার হয়, এবং সাইটের অ্যাডমিন আপনার লোকেশন ও সাইটে থাকার সময় দেখতে পান।</p>
+            {% if retention_days > 0 %}
+            <p>{{ retention_days }} দিন নিষ্ক্রিয় থাকলে এই তথ্য নিজে থেকেই মুছে যায়।</p>
             {% endif %}
-        </p>
-    {% endif %}
-
-</section>
-
-        <div style="margin-top:18px;padding:12px;border-radius:10px;background:#eef6ff;font-size:13px;line-height:1.5;">
-            <strong>Location:</strong> This app asks for your browser location permission and may update your current location while the site is open.
         </div>
 
         <footer>
-            <p>Weather data provided by OpenWeatherMap not Me.</p>
+            <p>আবহাওয়ার তথ্য: OpenWeatherMap</p>
         </footer>
 
     </main>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
-
 </body>
 </html>

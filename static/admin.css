@@ -1,0 +1,69 @@
+:root {
+    --bg: #f4f7fb;
+    --ink: #172033;
+    --muted: #667085;
+    --card: #ffffff;
+    --line: #e9edf3;
+    --danger: #b42318;
+    --ok: #12b76a;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Noto Sans Bengali", "Hind Siliguri", "Nirmala UI", "Segoe UI", system-ui, Arial, sans-serif;
+}
+
+.wrap { max-width: 1200px; margin: auto; padding: 24px 16px; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+h1, h2 { margin: 0 0 4px; }
+.muted { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 20px 0; }
+.stat, .table-wrap, .login-card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 5px 20px #0000000d;
+}
+.stat { color: var(--muted); font-size: 13px; }
+.stat strong { display: block; margin-top: 6px; color: var(--ink); font-size: 26px; }
+
+.table-wrap { overflow: auto; }
+table { width: 100%; min-width: 820px; border-collapse: collapse; }
+th, td { padding: 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; font-size: 14px; }
+th { background: #fafafa; font-weight: 600; white-space: nowrap; }
+td small { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
+code { font-size: 13px; }
+
+.dot { display: inline-block; width: 9px; height: 9px; margin-right: 6px; border-radius: 50%; background: #c4c9d2; }
+.dot.on { background: var(--ok); box-shadow: 0 0 0 3px #12b76a33; }
+.map-link { color: #175cd3; white-space: nowrap; }
+.empty { padding: 28px; color: var(--muted); text-align: center; }
+
+button { font: inherit; cursor: pointer; }
+.danger, .logout { padding: 8px 12px; border: 0; border-radius: 8px; color: #fff; }
+.danger { background: var(--danger); }
+.logout { background: #111827; }
+
+.flash, .error { margin: 14px 0 0; padding: 10px 12px; border-radius: 8px; font-size: 14px; }
+.flash { background: #ecfdf3; color: #067647; }
+.error { background: #fef3f2; color: var(--danger); }
+
+:focus-visible { outline: 2px solid #175cd3; outline-offset: 2px; }
+
+/* login page */
+.login-page { display: grid; place-items: center; min-height: 100vh; }
+.login-card { width: min(92%, 360px); padding: 28px; }
+.login-card input, .login-card button {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    font: inherit;
+}
+.login-card button { border: 0; background: #111827; color: #fff; }
