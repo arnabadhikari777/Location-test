@@ -1,66 +1,52 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Admin Panel</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<style>
-  body { font-family: system-ui, sans-serif; margin: 0; background: #f5f7fa; }
-  header { background: #2d3748; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
-  header a { color: #fff; font-size: 14px; }
-  main { padding: 16px; }
-  #map { height: 340px; border-radius: 10px; margin-bottom: 16px; }
-  .wrap { overflow-x: auto; background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
-  table { border-collapse: collapse; width: 100%; font-size: 14px; }
-  th, td { padding: 9px 12px; border-bottom: 1px solid #eee; text-align: left; white-space: nowrap; }
-  th { background: #edf2f7; }
-  td.ua { max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
-  button.del { background: #c53030; color: #fff; border: 0; border-radius: 5px; padding: 5px 9px; cursor: pointer; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Admin Dashboard</title>
+    <style>
+        body{font-family:Arial,sans-serif;background:#f4f7fb;margin:0;color:#172033}.wrap{max-width:1200px;margin:auto;padding:24px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:20px 0}.stat,.table-wrap{background:#fff;border-radius:14px;padding:18px;box-shadow:0 5px 20px #0000000d}.stat strong{font-size:28px;display:block;margin-top:7px}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:900px}th,td{text-align:left;padding:11px;border-bottom:1px solid #eee}th{background:#fafafa}.danger{background:#b42318;color:#fff;border:0;border-radius:7px;padding:7px 10px;cursor:pointer}.logout{background:#111;color:#fff;border:0;border-radius:8px;padding:9px 12px;cursor:pointer}.muted{color:#667085;font-size:13px}.map-link{white-space:nowrap}
+    </style>
 </head>
 <body>
-<header>
-  <strong>Admin Panel (Total: {{ rows|length }})</strong>
-  <a href="/admin/logout">Logout</a>
-</header>
-<main>
-  <div id="map"></div>
-  <div class="wrap">
-    <table>
-      <tr><th>#</th><th>Latitude</th><th>Longitude</th><th>Accuracy (m)</th><th>IP</th><th>Time (UTC)</th><th>Map</th><th>Device</th><th></th></tr>
-      {% for r in rows %}
-      <tr>
-        <td>{{ r.id }}</td>
-        <td>{{ r.latitude }}</td>
-        <td>{{ r.longitude }}</td>
-        <td>{{ r.accuracy|round(0) if r.accuracy else '-' }}</td>
-        <td>{{ r.ip }}</td>
-        <td>{{ r.created_at }}</td>
-        <td><a target="_blank" href="https://www.openstreetmap.org/?mlat={{ r.latitude }}&mlon={{ r.longitude }}#map=16/{{ r.latitude }}/{{ r.longitude }}">View</a></td>
-        <td class="ua" title="{{ r.user_agent }}">{{ r.user_agent }}</td>
-        <td>
-          <form method="post" action="/admin/delete/{{ r.id }}" onsubmit="return confirm('Delete this record?')">
-            <button class="del">Delete</button>
-          </form>
-        </td>
-      </tr>
-      {% else %}
-      <tr><td colspan="9">No locations yet.</td></tr>
-      {% endfor %}
-    </table>
-  </div>
-</main>
+<div class="wrap">
+    <div class="top">
+        <div><h1>Weather Admin Dashboard</h1><p class="muted">Visitor and live-location records</p></div>
+        <form method="POST" action="{{ url_for('admin_logout') }}"><button class="logout">Logout</button></form>
+    </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script>
-  const points = {{ points|tojson }};
-  const map = L.map("map").setView(points.length ? points[0] : [23.8, 90.4], points.length ? 11 : 6);
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "&copy; OpenStreetMap contributors", maxZoom: 19
-  }).addTo(map);
-  points.forEach(p => L.marker(p).addTo(map));
-  if (points.length > 1) map.fitBounds(points, { padding: [30, 30] });
-</script>
+    <div class="stats">
+        <div class="stat">Visitors<strong>{{ total_visitors }}</strong></div>
+        <div class="stat">With location<strong>{{ located_visitors }}</strong></div>
+        <div class="stat">Location updates<strong>{{ total_updates }}</strong></div>
+        <div class="stat">Active time<strong>{{ '%.0f'|format(total_active) }} sec</strong></div>
+    </div>
+
+    <div class="table-wrap">
+        <div class="top"><h2>Visitor records</h2><form method="POST" action="{{ url_for('delete_all_visitors') }}" onsubmit="return confirm('Delete ALL visitor and location records?')"><button class="danger">Delete All</button></form></div>
+        <table>
+            <thead><tr><th>ID</th><th>Visitor</th><th>First Seen</th><th>Last Seen</th><th>Latitude</th><th>Longitude</th><th>Accuracy</th><th>Location Updated</th><th>Active Seconds</th><th>Updates</th><th>Action</th></tr></thead>
+            <tbody>
+            {% for visitor in visitors %}
+            <tr>
+                <td>{{ visitor.id }}</td>
+                <td>{{ visitor.visitor_id[:12] }}…</td>
+                <td>{{ visitor.first_seen }}</td>
+                <td>{{ visitor.last_seen }}</td>
+                <td>{{ visitor.last_latitude if visitor.last_latitude is not none else '—' }}</td>
+                <td>{{ visitor.last_longitude if visitor.last_longitude is not none else '—' }}</td>
+                <td>{{ visitor.last_accuracy if visitor.last_accuracy is not none else '—' }} m</td>
+                <td>{{ visitor.location_updated_at or '—' }}</td>
+                <td>{{ '%.0f'|format(visitor.total_active_seconds) }}</td>
+                <td>{{ visitor.location_updates }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('delete_visitor', visitor_db_id=visitor.id) }}" onsubmit="return confirm('Delete this visitor record?')"><button class="danger">Delete</button></form>
+                </td>
+            </tr>
+            {% else %}<tr><td colspan="11">No visitor records yet.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 </body>
 </html>

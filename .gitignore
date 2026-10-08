@@ -1,6 +1,5 @@
+.venv
 .env
-*.db
 __pycache__/
 *.pyc
-venv/
-.venv/
+weather.db

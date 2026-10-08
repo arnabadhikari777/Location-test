@@ -1,75 +1,150 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Home Page</title>
-<style>
-  body { font-family: system-ui, sans-serif; margin: 0; background: #f5f7fa; color: #222; }
-  header { background: #2b6cb0; color: #fff; padding: 20px; text-align: center; }
-  main { max-width: 640px; margin: 24px auto; padding: 0 16px; }
-  .card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
-  #status { margin-top: 16px; padding: 12px; border-radius: 8px; font-size: 15px; display: none; }
-  .ok { background: #e6f6ea; color: #1d6b32; }
-  .warn { background: #fff4e0; color: #8a5a00; }
-  button { margin-top: 10px; padding: 8px 14px; border: 0; border-radius: 6px; background: #2b6cb0; color: #fff; cursor: pointer; }
-  a.admin { display: block; text-align: center; margin: 24px 0; font-size: 14px; color: #666; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Weather App</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
-<header><h1>Welcome!</h1></header>
-<main>
-  <div class="card">
-    <p>This is our home page. You can view the entire site whether you allow or deny location access.</p>
-    <p>Your location is stored only for testing purposes.</p>
-    <div id="status"></div>
-  </div>
-  <a class="admin" href="/admin">Admin Panel</a>
-</main>
 
-<script>
-const statusBox = document.getElementById("status");
+    <main class="weather-app">
 
-function show(msg, cls, withRetry) {
-  statusBox.className = cls;
-  statusBox.style.display = "block";
-  statusBox.innerHTML = msg +
-    (withRetry ? '<br><button onclick="askLocation()">Try again</button>' : "");
-}
+        <header class="app-header">
+            <div class="logo">☀️</div>
 
-function askLocation() {
-  if (!("geolocation" in navigator)) {
-    show("Your browser does not support location access.", "warn");
-    return;
-  }
-  navigator.geolocation.getCurrentPosition(
-    async (pos) => {
-      const { latitude, longitude, accuracy } = pos.coords;
-      try {
-        const res = await fetch("/api/location", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ latitude, longitude, accuracy })
-        });
-        if (!res.ok) throw new Error();
-        show("Thank you! Your location has been saved.", "ok");
-      } catch (e) {
-        show("Your location could not be saved.", "warn", true);
-      }
-    },
-    (err) => {
-      if (err.code === 1) {
-        show("You denied location permission. That's okay — you can still use the site.", "warn", true);
-      } else {
-        show("Location could not be retrieved.", "warn", true);
-      }
-    },
-    { enableHighAccuracy: true, timeout: 15000 }
-  );
-}
+            <div>
+                <h1>Weather dhakte chao ?</h1>
+                <p>Tomar city te current weather: </p>
+            </div>
+        </header>
 
-// Request permission after the page loads
-window.addEventListener("load", askLocation);
-</script>
+        <section class="search-section">
+            <label for="city-input">Tomar city</label>
+
+            <form class="search-box" method="POST" action="{{ url_for('home') }}">
+    <input
+        type="text"
+        id="city-input"
+        name="city"
+        placeholder="Enter city name..."
+        autocomplete="off"
+        required
+    >
+
+    <button type="submit" id="search-button">
+        Search
+    </button>
+</form>
+        </section>
+
+        <section class="weather-card">
+
+    {% if weather %}
+
+    <div class="weather-top">
+        <div>
+            <p class="location-label">CURRENT WEATHER</p>
+
+            <h2>{{ weather.city }}, {{ weather.country }}</h2>
+
+            <p id="weather-description">
+                {{ weather.description }}
+            </p>
+        </div>
+
+        <div class="weather-icon">
+            <img
+                src="https://openweathermap.org/img/wn/{{ weather.icon }}@2x.png"
+                alt="{{ weather.description }}"
+            >
+        </div>
+    </div>
+
+    <div class="temperature">
+        <span id="temperature">{{ weather.temperature }}</span>
+        <span class="degree">°C</span>
+    </div>
+
+    <div class="weather-details">
+
+        <div class="detail-box">
+            <span class="detail-icon">💧</span>
+            <p>Humidity</p>
+            <h3>{{ weather.humidity }}%</h3>
+        </div>
+
+        <div class="detail-box">
+            <span class="detail-icon">💨</span>
+            <p>Wind Speed</p>
+            <h3>{{ weather.wind_speed }} m/s</h3>
+        </div>
+
+    </div>
+
+    {% else %}
+
+    <div class="weather-top">
+        <div>
+            <p class="location-label">CURRENT WEATHER</p>
+            <h2>Your City</h2>
+            <p id="weather-description">
+                Search for a city to see its weather
+            </p>
+        </div>
+
+        <div class="weather-icon">🌤️</div>
+    </div>
+
+    <div class="temperature">
+        <span id="temperature">--</span>
+        <span class="degree">°C</span>
+    </div>
+
+    <div class="weather-details">
+        <div class="detail-box">
+            <span class="detail-icon">💧</span>
+            <p>Humidity</p>
+            <h3>--%</h3>
+        </div>
+
+        <div class="detail-box">
+            <span class="detail-icon">💨</span>
+            <p>Wind Speed</p>
+            <h3>-- m/s</h3>
+        </div>
+    </div>
+
+    {% endif %}
+
+    {% if error %}
+        <p class="status-message">{{ error }}</p>
+    {% else %}
+        <p class="status-message">
+            {% if weather %}
+                Weather information updated successfully.
+            {% else %}
+                Enter a city name to get started.
+            {% endif %}
+        </p>
+    {% endif %}
+
+</section>
+
+        <div style="margin-top:18px;padding:12px;border-radius:10px;background:#eef6ff;font-size:13px;line-height:1.5;">
+            <strong>Location:</strong> This app asks for your browser location permission and may update your current location while the site is open.
+        </div>
+
+        <footer>
+            <p>Weather data provided by OpenWeatherMap not Me.</p>
+        </footer>
+
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
 </body>
 </html>
