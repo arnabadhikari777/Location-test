@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="bn">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>হোম পেজ</title>
+<title>Home Page</title>
 <style>
   body { font-family: system-ui, sans-serif; margin: 0; background: #f5f7fa; color: #222; }
   header { background: #2b6cb0; color: #fff; padding: 20px; text-align: center; }
@@ -17,14 +17,14 @@
 </style>
 </head>
 <body>
-<header><h1>স্বাগতম!</h1></header>
+<header><h1>Welcome!</h1></header>
 <main>
   <div class="card">
-    <p>এটি আমাদের হোম পেজ। লোকেশনের অনুমতি দিন বা না দিন, আপনি পুরো সাইট দেখতে পারবেন।</p>
-    <p>আপনার লোকেশন শুধু টেস্টিংয়ের জন্য সংরক্ষণ করা হয়।</p>
+    <p>This is our home page. You can view the entire site whether you allow or deny location access.</p>
+    <p>Your location is stored only for testing purposes.</p>
     <div id="status"></div>
   </div>
-  <a class="admin" href="/admin">অ্যাডমিন প্যানেল</a>
+  <a class="admin" href="/admin">Admin Panel</a>
 </main>
 
 <script>
@@ -34,12 +34,12 @@ function show(msg, cls, withRetry) {
   statusBox.className = cls;
   statusBox.style.display = "block";
   statusBox.innerHTML = msg +
-    (withRetry ? '<br><button onclick="askLocation()">আবার চেষ্টা করুন</button>' : "");
+    (withRetry ? '<br><button onclick="askLocation()">Try again</button>' : "");
 }
 
 function askLocation() {
   if (!("geolocation" in navigator)) {
-    show("আপনার ব্রাউজার লোকেশন সাপোর্ট করে না।", "warn");
+    show("Your browser does not support location access.", "warn");
     return;
   }
   navigator.geolocation.getCurrentPosition(
@@ -52,23 +52,23 @@ function askLocation() {
           body: JSON.stringify({ latitude, longitude, accuracy })
         });
         if (!res.ok) throw new Error();
-        show("ধন্যবাদ! আপনার লোকেশন সংরক্ষিত হয়েছে।", "ok");
+        show("Thank you! Your location has been saved.", "ok");
       } catch (e) {
-        show("লোকেশন সংরক্ষণ করা যায়নি।", "warn", true);
+        show("Your location could not be saved.", "warn", true);
       }
     },
     (err) => {
       if (err.code === 1) {
-        show("লোকেশনের অনুমতি দেননি। ঠিক আছে, আপনি সাইট ব্যবহার করতে পারেন।", "warn", true);
+        show("You denied location permission. That's okay — you can still use the site.", "warn", true);
       } else {
-        show("লোকেশন পাওয়া যায়নি।", "warn", true);
+        show("Location could not be retrieved.", "warn", true);
       }
     },
     { enableHighAccuracy: true, timeout: 15000 }
   );
 }
 
-// পেজ আগে লোড হবে, তারপর অনুমতি চাওয়া হবে
+// Request permission after the page loads
 window.addEventListener("load", askLocation);
 </script>
 </body>
